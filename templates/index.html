@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flood Impact Intelligence — Data Pipeline Demo</title>
+  <meta name="description" content="An interactive demonstration of the AI-powered flood impact data pipeline: relevancy checking, geolocated extraction, and severity assessment." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+
+<!-- ═══════════════ HEADER NAV ═══════════════ -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo">
+      <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2C8 2 4 6 4 11c0 6 8 11 8 11s8-5 8-11c0-5-4-9-8-9z"/>
+        <path d="M9 14c0-2 1-4 3-4s3 2 3 4"/>
+        <line x1="9" y1="10" x2="9" y2="10.01"/>
+      </svg>
+      <span class="logo-text">Impact<strong>Intel</strong> <span class="logo-sub">Pipeline Demo</span></span>
+    </div>
+
+    <div class="mode-switcher">
+      <button class="mode-btn active" id="btn-demo" onclick="setMode('demo')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Demo Mode
+      </button>
+      <button class="mode-btn" id="btn-live" onclick="setMode('live')">
+        <span class="live-dot"></span>
+        Live Mode
+      </button>
+    </div>
+
+    <div class="mode-badge" id="mode-badge">
+      <span id="mode-badge-text">🎬 DEMO</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-label">Agentic AI · Data Pipeline</div>
+    <h1 class="hero-title">Flood Impact Intelligence</h1>
+    <p class="hero-sub">An end-to-end demonstration of how raw news text is transformed into structured, geolocated, severity-assessed flood impact intelligence using a Large Language Model pipeline.</p>
+    <div class="pipeline-overview">
+      <div class="po-step active" id="po-1">
+        <div class="po-num">1</div>
+        <div class="po-label">Source Text</div>
+      </div>
+      <div class="po-arrow">→</div>
+      <div class="po-step" id="po-2">
+        <div class="po-num">2</div>
+        <div class="po-label">Relevancy Check</div>
+      </div>
+      <div class="po-arrow">→</div>
+      <div class="po-step" id="po-3">
+        <div class="po-num">3</div>
+        <div class="po-label">Impact Extraction</div>
+      </div>
+      <div class="po-arrow">→</div>
+      <div class="po-step" id="po-4">
+        <div class="po-num">4</div>
+        <div class="po-label">Severity Assessment</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ PIPELINE CONTENT ═══════════════ -->
+<main class="pipeline-main">
+
+  <!-- ─── STEP 1: SOURCE TEXT ─── -->
+  <section class="pipeline-step" id="step-1">
+    <div class="step-header">
+      <div class="step-number">1</div>
+      <div class="step-title-block">
+        <h2 class="step-title">Source Text Input</h2>
+        <p class="step-subtitle">Paste a news article, social media post, or field report relating to a flood event.</p>
+      </div>
+      <div class="step-status-badge" id="step1-status"></div>
+    </div>
+    <div class="step-body">
+      <div class="demo-banner" id="demo-banner-1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>Demo mode: Example Somerset flooding text has been pre-loaded for you.</span>
+      </div>
+      <div class="text-input-area">
+        <label class="input-label" for="source-text">Source Text</label>
+        <textarea id="source-text" class="source-textarea" rows="8" placeholder="Paste your text here..."></textarea>
+        <div class="input-meta">
+          <span id="char-count">0 characters</span>
+          <div class="input-actions">
+            <button class="btn-ghost" id="btn-clear-text" onclick="clearText()">Clear</button>
+            <button class="btn-ghost" id="btn-load-demo-text" onclick="loadDemoText()">Load Demo Text</button>
+          </div>
+        </div>
+      </div>
+      <div class="step-actions">
+        <button class="btn-primary agentic-btn" id="btn-run-relevancy" onclick="runRelevancy()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Run Relevancy Check
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── STEP 2: RELEVANCY CHECK ─── -->
+  <section class="pipeline-step locked" id="step-2">
+    <div class="step-header">
+      <div class="step-number">2</div>
+      <div class="step-title-block">
+        <h2 class="step-title">Relevancy Assessment</h2>
+        <p class="step-subtitle">The LLM evaluates the text against four relevancy criteria. All must pass for the text to proceed.</p>
+      </div>
+      <div class="step-status-badge" id="step2-status"></div>
+    </div>
+    <div class="step-body">
+      <div class="llm-thinking" id="llm-thinking-2" style="display:none">
+        <div class="thinking-spinner"></div>
+        <span id="llm-thinking-text-2">Analysing text with LLM…</span>
+      </div>
+
+      <div class="checklist-grid" id="relevancy-checklist" style="display:none">
+        <!-- Generated by JS -->
+      </div>
+
+      <div class="relevancy-verdict" id="relevancy-verdict" style="display:none"></div>
+
+      <div class="step-actions" id="step2-actions" style="display:none">
+        <button class="btn-primary agentic-btn" id="btn-run-extraction" onclick="runExtraction()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Proceed to Impact Extraction
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── STEP 3: IMPACT EXTRACTION ─── -->
+  <section class="pipeline-step locked" id="step-3">
+    <div class="step-header">
+      <div class="step-number">3</div>
+      <div class="step-title-block">
+        <h2 class="step-title">Geolocated Impact Extraction</h2>
+        <p class="step-subtitle">The LLM extracts and geolocates every distinct flood impact to the highest available resolution, outputting structured GeoJSON.</p>
+      </div>
+      <div class="step-status-badge" id="step3-status"></div>
+    </div>
+    <div class="step-body">
+      <div class="llm-thinking" id="llm-thinking-3" style="display:none">
+        <div class="thinking-spinner"></div>
+        <span id="llm-thinking-text-3">Extracting and geolocating impacts…</span>
+      </div>
+
+      <div id="extraction-results" style="display:none">
+        <div class="extraction-header-row">
+          <div class="source-chip" id="source-chip"></div>
+          <div class="geojson-toggle-row">
+            <button class="btn-ghost small" onclick="toggleGeoJson()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              View Raw GeoJSON
+            </button>
+          </div>
+        </div>
+
+        <div class="impact-cards-grid" id="impact-cards-grid"></div>
+
+        <div class="geojson-viewer" id="geojson-viewer" style="display:none">
+          <pre id="geojson-pre"></pre>
+        </div>
+
+        <div class="step-actions">
+          <button class="btn-primary agentic-btn" id="btn-run-severity" onclick="runSeverity()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Run Severity Assessment
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── STEP 4: SEVERITY ASSESSMENT ─── -->
+  <section class="pipeline-step locked" id="step-4">
+    <div class="step-header">
+      <div class="step-number">4</div>
+      <div class="step-title-block">
+        <h2 class="step-title">Severity Assessment & Confidence Rating</h2>
+        <p class="step-subtitle">Each impact is assessed against the National Flood Impact Framework and given a confidence rating based on source quality.</p>
+      </div>
+      <div class="step-status-badge" id="step4-status"></div>
+    </div>
+    <div class="step-body">
+      <div class="llm-thinking" id="llm-thinking-4" style="display:none">
+        <div class="thinking-spinner"></div>
+        <span id="llm-thinking-text-4">Applying severity framework…</span>
+      </div>
+
+      <div id="severity-results" style="display:none">
+
+        <!-- Framework Reference -->
+        <div class="framework-panel">
+          <div class="framework-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+            Severity Assessment Framework — Table 2: Flood Impacts
+          </div>
+          <div class="framework-table-wrap">
+            <table class="framework-table">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th class="sev-minimal">Minimal</th>
+                  <th class="sev-minor">Minor</th>
+                  <th class="sev-significant">Significant</th>
+                  <th class="sev-severe">Severe</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="category-cell">Risk to Life</td>
+                  <td>Not expected</td>
+                  <td>Individual risk for the more vulnerable or those in unfamiliar situations</td>
+                  <td>Danger to life from fast flowing/deep water, wave overtopping, and physical hazards</td>
+                  <td>Danger to life from fast flowing/deep water and physical, chemical or utility hazards</td>
+                </tr>
+                <tr>
+                  <td class="category-cell">Communities (Access)</td>
+                  <td>Isolated and localised flooding of low-lying land and roads</td>
+                  <td>Localised flooding of land and roads</td>
+                  <td>Some communities temporarily inaccessible due to flooded access routes</td>
+                  <td>Communities cut off</td>
+                </tr>
+                <tr>
+                  <td class="category-cell">Communities (Properties)</td>
+                  <td>Isolated instances of spray/wave overtopping on coastal promenades</td>
+                  <td>Localised flooding (inc. waves) affecting individual properties</td>
+                  <td>Flooding affecting properties and parts of individual or multiple communities</td>
+                  <td>Widespread flooding affecting large numbers of properties and whole communities</td>
+                </tr>
+                <tr>
+                  <td class="category-cell">Communities (Structures)</td>
+                  <td>Not expected</td>
+                  <td>Local damage due to age and/or condition of structure</td>
+                  <td>Damage to buildings/structures</td>
+                  <td>Extensive damage to and/or collapse of buildings/structures</td>
+                </tr>
+                <tr>
+                  <td class="category-cell">Transport</td>
+                  <td>Little disruption to travel although wet roads and fords could lead to difficult driving conditions</td>
+                  <td>Local and short term disruption to travel</td>
+                  <td>Widespread or long duration disruption. Damage to network; some route closure</td>
+                  <td>Widespread and long duration disruption. Motorists stranded. Widespread route closures</td>
+                </tr>
+                <tr>
+                  <td class="category-cell">Utilities</td>
+                  <td>Not expected</td>
+                  <td>Localised and short term disruption to utilities and services</td>
+                  <td>Disruption to utilities and services</td>
+                  <td>Widespread/prolonged disruption through loss of utilities and services</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Per-impact severity cards -->
+        <div class="severity-cards-grid" id="severity-cards-grid"></div>
+
+        <!-- Confidence panel -->
+        <div class="confidence-panel" id="confidence-panel"></div>
+
+        <!-- Overall summary -->
+        <div class="overall-summary" id="overall-summary"></div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer class="site-footer">
+  <p>Impact Intelligence Platform · Pipeline Demo · Civil Service Challenge 2026 · <span id="footer-mode">Demo Mode</span></p>
+</footer>
+
+<script src="{{ url_for('static', filename='pipeline.js') }}"></script>
+</body>
+</html>
