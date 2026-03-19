@@ -3,6 +3,7 @@
 
 let currentMode = 'demo';
 let sourceText = "";
+let pipelineText = "";
 let relevancyResult = null;
 let extractionResult = null;
 let severityResult = null;
@@ -77,6 +78,28 @@ function resetPipeline(fromStep) {
   }
 }
 
+// ═══════════════ ANIMATIONS & UTILS ═══════════════
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function playTerminalAnimation(terminalElementId, lines) {
+  const terminal = document.getElementById(terminalElementId);
+  terminal.innerHTML = '';
+  for (let i = 0; i < lines.length; i++) {
+    const div = document.createElement('div');
+    div.className = 'terminal-line';
+    div.textContent = `> ${lines[i]}`;
+    terminal.appendChild(div);
+    // Auto-scroll to bottom of terminal container if it exceeds max height
+    if (terminal.children.length > 3) {
+        terminal.removeChild(terminal.firstChild);
+    }
+    await sleep(400); // Wait 400ms between lines
+  }
+}
+
 // ═══════════════ PIPELINE STEPS ═══════════════
 
 async function runRelevancy() {
@@ -84,6 +107,8 @@ async function runRelevancy() {
     alert("Please provide some source text first.");
     return;
   }
+
+  pipelineText = sourceText;
 
   // UI Setup
   resetPipeline(1);
@@ -105,14 +130,26 @@ async function runRelevancy() {
   // Smooth scroll
   step2.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
+  // Terminal Animation
+  const animPromise = playTerminalAnimation('thinking-terminal-2', [
+    "Initializing relevancy agent...",
+    "Tokenizing input text...",
+    "Evaluating against framework criteria...",
+    "Validating source recency...",
+    "Synthesizing relevancy report..."
+  ]);
+
   // API Call
   const endpoint = currentMode === 'demo' ? '/api/demo/relevancy' : '/api/live/relevancy';
   try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: sourceText })
-    });
+    const [response, _] = await Promise.all([
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: pipelineText })
+      }),
+      animPromise // Ensure animation completes
+    ]);
     const data = await response.json();
     
     if (data.error) throw new Error(data.error);
@@ -120,17 +157,32 @@ async function runRelevancy() {
     relevancyResult = data;
 
     // Render Checklist
-    renderRelevancyChecklist(data.checks);
-    
-    // Render Verdict
     spinner.style.display = 'none';
     checklist.style.display = 'grid';
+    await renderRelevancyChecklist(data.checks);
+
+    // Render Verdict
     verdict.style.display = 'block';
     
     if (data.overall) {
       verdict.className = "relevancy-verdict pass";
       verdict.innerHTML = `<strong>PASS:</strong> ${data.summary}`;
       actions.style.display = 'flex';
+
+      // Auto-proceed to extraction
+      const proceedBtn = document.getElementById('btn-run-extraction');
+      proceedBtn.innerHTML = `
+        <div class="thinking-spinner" style="width: 14px; height: 14px; border-width: 2px; margin-right: 8px;"></div>
+        Auto-proceeding to Impact Extraction...
+      `;
+      setTimeout(() => {
+        proceedBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Proceed to Impact Extraction
+        `;
+        runExtraction();
+      }, 1500);
+
     } else {
       verdict.className = "relevancy-verdict fail";
       verdict.innerHTML = `<strong>REJECTED:</strong> ${data.summary}`;
@@ -142,18 +194,19 @@ async function runRelevancy() {
   }
 }
 
-function renderRelevancyChecklist(checks) {
+async function renderRelevancyChecklist(checks) {
   const container = document.getElementById('relevancy-checklist');
   container.innerHTML = "";
 
-  checks.forEach((c, idx) => {
+  for (let idx = 0; idx < checks.length; idx++) {
+    const c = checks[idx];
     const icon = c.result 
       ? `<svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`
       : `<svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
     
     const card = document.createElement('div');
     card.className = `check-card ${c.result ? 'pass' : 'fail'}`;
-    card.style.animation = `fadeSlideIn 0.3s ease forwards ${idx * 0.1}s`;
+    card.style.animation = `fadeSlideIn 0.3s ease forwards`;
     card.style.opacity = 0;
 
     card.innerHTML = `
@@ -164,7 +217,8 @@ function renderRelevancyChecklist(checks) {
       <div class="check-reasoning">${c.reasoning}</div>
     `;
     container.appendChild(card);
-  });
+    await sleep(200); // Wait 200ms before rendering the next card
+  }
 }
 
 async function runExtraction() {
@@ -183,14 +237,26 @@ async function runExtraction() {
 
   step3.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
+  // Terminal Animation
+  const animPromise = playTerminalAnimation('thinking-terminal-3', [
+    "Parsing relevant text segments...",
+    "Identifying locations and entities...",
+    "Geocoding locations to highest resolution...",
+    "Extracting impact types and descriptions...",
+    "Structuring output as GeoJSON..."
+  ]);
+
   // API Call
   const endpoint = currentMode === 'demo' ? '/api/demo/extraction' : '/api/live/extraction';
   try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: sourceText })
-    });
+    const [response, _] = await Promise.all([
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: pipelineText })
+      }),
+      animPromise // Ensure animation completes
+    ]);
     const data = await response.json();
     if (data.error) throw new Error(data.error);
     
@@ -202,11 +268,26 @@ async function runExtraction() {
       Source: ${data.source_label} (${data.source_quality})
     `;
 
-    renderImpactCards(data.geojson.features);
     document.getElementById('geojson-pre').textContent = JSON.stringify(data.geojson, null, 2);
 
     spinner.style.display = 'none';
     results.style.display = 'block';
+
+    await renderImpactCards(data.geojson.features);
+
+    // Auto-proceed to severity
+    const proceedBtn = document.getElementById('btn-run-severity');
+    proceedBtn.innerHTML = `
+      <div class="thinking-spinner" style="width: 14px; height: 14px; border-width: 2px; margin-right: 8px;"></div>
+      Auto-proceeding to Severity Assessment...
+    `;
+    setTimeout(() => {
+      proceedBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Run Severity Assessment
+      `;
+      runSeverity();
+    }, 1500);
 
   } catch (err) {
     spinner.style.display = 'none';
@@ -214,15 +295,16 @@ async function runExtraction() {
   }
 }
 
-function renderImpactCards(features) {
+async function renderImpactCards(features) {
   const container = document.getElementById('impact-cards-grid');
   container.innerHTML = "";
 
-  features.forEach((f, idx) => {
+  for (let idx = 0; idx < features.length; idx++) {
+    const f = features[idx];
     const p = f.properties;
     const card = document.createElement('div');
     card.className = "impact-card";
-    card.style.animation = `fadeSlideIn 0.3s ease forwards ${idx * 0.1}s`;
+    card.style.animation = `fadeSlideIn 0.3s ease forwards`;
     card.style.opacity = 0;
     
     // Map category to color if needed (from style guide)
@@ -241,7 +323,8 @@ function renderImpactCards(features) {
       <div class="impact-desc">${p.impact_description}</div>
     `;
     container.appendChild(card);
-  });
+    await sleep(200); // Wait 200ms before rendering the next card
+  }
 }
 
 function getCategoryColor(cat) {
@@ -278,22 +361,31 @@ async function runSeverity() {
 
   step4.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
+  // Terminal Animation
+  const animPromise = playTerminalAnimation('thinking-terminal-4', [
+    "Loading National Flood Impact Framework...",
+    "Cross-referencing impact categories...",
+    "Assessing scale and disruption duration...",
+    "Determining confidence based on source quality...",
+    "Finalizing severity classification..."
+  ]);
+
   // API Call
   const endpoint = currentMode === 'demo' ? '/api/demo/severity' : '/api/live/severity';
   try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ impacts: extractionResult.geojson.features })
-    });
+    const [response, _] = await Promise.all([
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ impacts: extractionResult.geojson.features })
+      }),
+      animPromise // Ensure animation completes
+    ]);
     const data = await response.json();
     if (data.error) throw new Error(data.error);
     
     severityResult = data;
 
-    renderSeverityCards(data.assessments);
-    renderConfidence(data.confidence);
-    
     // Overall Summary
     const overall = document.getElementById('overall-summary');
     overall.innerHTML = `
@@ -307,19 +399,25 @@ async function runSeverity() {
     spinner.style.display = 'none';
     results.style.display = 'block';
 
+    await renderSeverityCards(data.assessments);
+    renderConfidence(data.confidence);
+
   } catch (err) {
     spinner.style.display = 'none';
     alert("Error running severity assessment: " + err.message);
   }
 }
 
-function renderSeverityCards(assessments) {
+async function renderSeverityCards(assessments) {
   const container = document.getElementById('severity-cards-grid');
   container.innerHTML = "";
 
-  assessments.forEach((a, idx) => {
+  for (let idx = 0; idx < assessments.length; idx++) {
+    const a = assessments[idx];
     const card = document.createElement('div');
     card.className = "sev-card";
+    card.style.animation = `fadeSlideIn 0.3s ease forwards`;
+    card.style.opacity = 0;
     const sLevel = a.severity_level || 1;
     
     card.innerHTML = `
@@ -337,7 +435,8 @@ function renderSeverityCards(assessments) {
       </div>
     `;
     container.appendChild(card);
-  });
+    await sleep(200); // Wait 200ms before rendering the next card
+  }
 }
 
 function renderConfidence(conf) {
