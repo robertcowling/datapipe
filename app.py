@@ -18,31 +18,31 @@ DEMO_RELEVANCY = {
     "checks": [
         {
             "id": "hydro_flood",
-            "label": "Relates to real hydrological flooding (not burst pipes / internal water ingress)",
+            "label": "Real hydrological flooding",
             "result": True,
             "reasoning": "Text explicitly describes river flooding, standing water on roads, and Environment Agency river level data — clearly hydrological in nature."
         },
         {
             "id": "impact_info",
-            "label": "Contains actual impact information (roads flooded, rescues, property flooding, etc.)",
+            "label": "Actual impact information",
             "result": True,
             "reasoning": "Multiple concrete impacts identified: A361 impassable, 3-person rescue, 40 properties flooded, 500 homes without power, rail line suspended."
         },
         {
             "id": "not_warning_rehash",
-            "label": "Not merely a rehash of an EA / Met Office warning",
+            "label": "New information (not rehashed warning)",
             "result": True,
             "reasoning": "While an EA statement is referenced, the article primarily reports observed impacts and emergency response actions — not just forecast warnings."
         },
         {
             "id": "recency",
-            "label": "Relates to flooding impacts within the last 2 days",
+            "label": "Recent impacts (within 2 days)",
             "result": True,
             "reasoning": "Article dateline is 18 March 2026, consistent with current date. Events described as occurring overnight and in the early hours."
         }
     ],
     "overall": True,
-    "summary": "Text is relevant. Hydrological flooding with confirmed impacts, rescue operations, and current recency. Proceed to extraction."
+    "summary": "Text is relevant. Hydrological flooding with confirmed impacts, rescue operations, and current recency."
 }
 
 DEMO_EXTRACTION = {

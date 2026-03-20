@@ -72,9 +72,11 @@ function resetPipeline(fromStep) {
   for (let i = fromStep + 1; i <= 4; i++) {
     const step = document.getElementById(`step-${i}`);
     const po = document.getElementById(`po-${i}`);
-    step.classList.add('locked');
-    step.classList.remove('active-step');
-    po.classList.remove('active');
+    if (step) {
+      step.classList.add('locked');
+      step.classList.remove('active-step');
+    }
+    if (po) po.classList.remove('active');
   }
 }
 
@@ -119,16 +121,17 @@ async function runRelevancy() {
   const verdict = document.getElementById('relevancy-verdict');
   const actions = document.getElementById('step2-actions');
 
-  step2.classList.remove('locked');
-  step2.classList.add('active-step');
-  po2.classList.add('active');
+  if (step2) {
+    step2.classList.remove('locked');
+    step2.classList.add('active-step');
+    step2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  if (po2) po2.classList.add('active');
+  
   spinner.style.display = 'flex';
-  checklist.style.display = 'none';
-  verdict.style.display = 'none';
-  actions.style.display = 'none';
-
-  // Smooth scroll
-  step2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (checklist) checklist.style.display = 'none';
+  if (verdict) verdict.style.display = 'none';
+  if (actions) actions.style.display = 'none';
 
   // Terminal Animation
   const animPromise = playTerminalAnimation('thinking-terminal-2', [
@@ -166,23 +169,11 @@ async function runRelevancy() {
     
     if (data.overall) {
       verdict.className = "relevancy-verdict pass";
-      verdict.innerHTML = `<strong>PASS:</strong> ${data.summary}`;
-      actions.style.display = 'flex';
-
-      // Auto-proceed to extraction
-      const proceedBtn = document.getElementById('btn-run-extraction');
-      proceedBtn.innerHTML = `
-        <div class="thinking-spinner" style="width: 14px; height: 14px; border-width: 2px; margin-right: 8px;"></div>
-        Auto-proceeding to Impact Extraction...
+      verdict.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" style="width: 32px; height: 32px;"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>PASS</span>
       `;
-      setTimeout(() => {
-        proceedBtn.innerHTML = `
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          Proceed to Impact Extraction
-        `;
-        runExtraction();
-      }, 1500);
-
+      actions.style.display = 'flex';
     } else {
       verdict.className = "relevancy-verdict fail";
       verdict.innerHTML = `<strong>REJECTED:</strong> ${data.summary}`;
@@ -210,11 +201,11 @@ async function renderRelevancyChecklist(checks) {
     card.style.opacity = 0;
 
     card.innerHTML = `
-      <div class="check-header">
-        ${icon}
-        <span>${c.label}</span>
+      ${icon}
+      <div class="check-text">
+        <div class="check-header">${c.label}</div>
+        <div class="check-reasoning">${c.reasoning}</div>
       </div>
-      <div class="check-reasoning">${c.reasoning}</div>
     `;
     container.appendChild(card);
     await sleep(200); // Wait 200ms before rendering the next card
@@ -229,13 +220,15 @@ async function runExtraction() {
   const spinner = document.getElementById('llm-thinking-3');
   const results = document.getElementById('extraction-results');
 
-  step3.classList.remove('locked');
-  step3.classList.add('active-step');
-  po3.classList.add('active');
+  if (step3) {
+    step3.classList.remove('locked');
+    step3.classList.add('active-step');
+    step3.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  if (po3) po3.classList.add('active');
+  
   spinner.style.display = 'flex';
-  results.style.display = 'none';
-
-  step3.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (results) results.style.display = 'none';
 
   // Terminal Animation
   const animPromise = playTerminalAnimation('thinking-terminal-3', [
@@ -274,20 +267,6 @@ async function runExtraction() {
     results.style.display = 'block';
 
     await renderImpactCards(data.geojson.features);
-
-    // Auto-proceed to severity
-    const proceedBtn = document.getElementById('btn-run-severity');
-    proceedBtn.innerHTML = `
-      <div class="thinking-spinner" style="width: 14px; height: 14px; border-width: 2px; margin-right: 8px;"></div>
-      Auto-proceeding to Severity Assessment...
-    `;
-    setTimeout(() => {
-      proceedBtn.innerHTML = `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        Run Severity Assessment
-      `;
-      runSeverity();
-    }, 1500);
 
   } catch (err) {
     spinner.style.display = 'none';
@@ -353,13 +332,15 @@ async function runSeverity() {
   const spinner = document.getElementById('llm-thinking-4');
   const results = document.getElementById('severity-results');
 
-  step4.classList.remove('locked');
-  step4.classList.add('active-step');
-  po4.classList.add('active');
+  if (step4) {
+    step4.classList.remove('locked');
+    step4.classList.add('active-step');
+    step4.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  if (po4) po4.classList.add('active');
+  
   spinner.style.display = 'flex';
-  results.style.display = 'none';
-
-  step4.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (results) results.style.display = 'none';
 
   // Terminal Animation
   const animPromise = playTerminalAnimation('thinking-terminal-4', [
