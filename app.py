@@ -179,6 +179,31 @@ DEMO_SEVERITY = {
         "rating": "High",
         "score": 85,
         "rationale": "Source is BBC News — a high-quality, professionally edited national outlet. Direct reporting of observed impacts with named locations and specific figures. No significant vagueness or unverified claims."
+    },
+    "consensus": {
+        "judges": [
+            {
+                "model": "GPT-5.3",
+                "severity": "Severe",
+                "confidence": 88,
+                "notes": "Multiple concurrent impacts including property flooding, rescue operations, and utility failures strongly indicate Severe classification."
+            },
+            {
+                "model": "Claude Opus 4.6",
+                "severity": "Severe",
+                "confidence": 91,
+                "notes": "Declared major incident with evacuations, widespread power loss and transport disruption aligns clearly with Severe threshold."
+            },
+            {
+                "model": "Gemini 3.1 Pro",
+                "severity": "Severe",
+                "confidence": 84,
+                "notes": "Scale of property flooding and multi-sector disruption exceeds Significant. Agree with Severe given evacuation scale."
+            }
+        ],
+        "agreement": "Unanimous",
+        "final_severity": "Severe",
+        "summary": "All three judges independently assessed the overall impact as Severe with high confidence. No disagreement on classification."
     }
 }
 
@@ -230,4 +255,4 @@ def api_live_severity():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=8000)

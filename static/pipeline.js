@@ -25,26 +25,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function setMode(mode) {
   currentMode = mode;
+
+  // Always reset pipeline state on mode switch
+  resetPipeline(1);
+  updateProgressTracker(1);
+
   const btnDemo = document.getElementById('btn-demo');
   const btnLive = document.getElementById('btn-live');
-  const badgeText = document.getElementById('mode-badge-text');
   const footerMode = document.getElementById('footer-mode');
   const banner = document.getElementById('demo-banner-1');
 
   if (mode === 'demo') {
     btnDemo.classList.add('active');
     btnLive.classList.remove('active');
-    badgeText.textContent = "🎬 DEMO";
     footerMode.textContent = "Demo Mode";
     banner.style.display = 'flex';
     loadDemoText();
   } else {
     btnDemo.classList.remove('active');
     btnLive.classList.add('active');
-    badgeText.textContent = "🌐 LIVE";
     footerMode.textContent = "Live Mode";
     banner.style.display = 'none';
-    clearText();
+    document.getElementById('source-text').value = "";
+    sourceText = "";
+    updateCharCount();
   }
 }
 
@@ -68,7 +72,7 @@ function clearText() {
 }
 
 function resetPipeline(fromStep) {
-  // Lock subsequent steps
+  // Lock subsequent steps and hide their results
   for (let i = fromStep + 1; i <= 4; i++) {
     const step = document.getElementById(`step-${i}`);
     const po = document.getElementById(`po-${i}`);
@@ -78,6 +82,27 @@ function resetPipeline(fromStep) {
     }
     if (po) po.classList.remove('active');
   }
+
+  // Hide result containers for reset steps
+  const hideIds = {
+    2: ['llm-thinking-2', 'relevancy-checklist', 'relevancy-verdict', 'step2-actions'],
+    3: ['llm-thinking-3', 'extraction-results'],
+    4: ['llm-thinking-4', 'severity-results']
+  };
+
+  for (let i = fromStep + 1; i <= 4; i++) {
+    if (hideIds[i]) {
+      hideIds[i].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+    }
+  }
+
+  // Clear result variables
+  if (fromStep <= 1) { relevancyResult = null; extractionResult = null; severityResult = null; }
+  if (fromStep <= 2) { extractionResult = null; severityResult = null; }
+  if (fromStep <= 3) { severityResult = null; }
 }
 
 // ═══════════════ ANIMATIONS & UTILS ═══════════════
@@ -114,6 +139,7 @@ async function runRelevancy() {
 
   // UI Setup
   resetPipeline(1);
+  updateProgressTracker(2);
   const step2 = document.getElementById('step-2');
   const po2 = document.getElementById('po-2');
   const spinner = document.getElementById('llm-thinking-2');
@@ -215,6 +241,7 @@ async function renderRelevancyChecklist(checks) {
 async function runExtraction() {
   // UI Setup
   resetPipeline(2);
+  updateProgressTracker(3);
   const step3 = document.getElementById('step-3');
   const po3 = document.getElementById('po-3');
   const spinner = document.getElementById('llm-thinking-3');
@@ -260,8 +287,6 @@ async function runExtraction() {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
       Source: ${data.source_label} (${data.source_quality})
     `;
-
-    document.getElementById('geojson-pre').textContent = JSON.stringify(data.geojson, null, 2);
 
     spinner.style.display = 'none';
     results.style.display = 'block';
@@ -312,21 +337,15 @@ function getCategoryColor(cat) {
     "Communities": "#4e828a",
     "Utilities": "#8a7d4e",
     "Power": "#8a7d4e",
-    "Structures": "#5b61a1"
+    "Structures": "#446b82"
   };
   return cats[cat] || "#64748b";
-}
-
-let isGeoJsonVisible = false;
-function toggleGeoJson() {
-  const viewer = document.getElementById('geojson-viewer');
-  isGeoJsonVisible = !isGeoJsonVisible;
-  viewer.style.display = isGeoJsonVisible ? 'block' : 'none';
 }
 
 async function runSeverity() {
   // UI Setup
   resetPipeline(3);
+  updateProgressTracker(4);
   const step4 = document.getElementById('step-4');
   const po4 = document.getElementById('po-4');
   const spinner = document.getElementById('llm-thinking-4');
@@ -381,6 +400,7 @@ async function runSeverity() {
     results.style.display = 'block';
 
     await renderSeverityCards(data.assessments);
+    renderConsensus(data.consensus);
     renderConfidence(data.confidence);
 
   } catch (err) {
@@ -420,6 +440,37 @@ async function renderSeverityCards(assessments) {
   }
 }
 
+function renderConsensus(consensus) {
+  const container = document.getElementById('consensus-panel');
+  if (!consensus) { container.style.display = 'none'; return; }
+
+  const judgeCards = consensus.judges.map(j => `
+    <div class="judge-card">
+      <div class="judge-header">
+        <span class="judge-model">${j.model}</span>
+        <span class="judge-severity s${j.severity === 'Severe' ? 4 : j.severity === 'Significant' ? 3 : j.severity === 'Minor' ? 2 : 1}">${j.severity}</span>
+      </div>
+      <div class="judge-confidence">
+        <div class="judge-conf-bar">
+          <div class="judge-conf-fill" style="width: ${j.confidence}%"></div>
+        </div>
+        <span class="judge-conf-val">${j.confidence}%</span>
+      </div>
+      <div class="judge-notes">${j.notes}</div>
+    </div>
+  `).join('');
+
+  container.innerHTML = `
+    <div class="consensus-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      LLM-as-Judge Consensus
+      <span class="consensus-badge ${consensus.agreement === 'Unanimous' ? 'unanimous' : 'split'}">${consensus.agreement}</span>
+    </div>
+    <div class="judges-grid">${judgeCards}</div>
+    <div class="consensus-summary">${consensus.summary}</div>
+  `;
+}
+
 function renderConfidence(conf) {
   const container = document.getElementById('confidence-panel');
   const ratingClass = conf.rating.toLowerCase(); // e.g. 'high' or 'med'
@@ -436,5 +487,20 @@ function renderConfidence(conf) {
   `;
 }
 
-// ═══════════════ ANIMATIONS ═══════════════
-// Animation classes are handled in style.css
+// ═══════════════ PROGRESS TRACKER ═══════════════
+
+function updateProgressTracker(activeStep) {
+  const steps = document.querySelectorAll('.pt-step');
+  const connectors = document.querySelectorAll('.pt-connector');
+
+  steps.forEach((el, idx) => {
+    const stepNum = idx + 1;
+    el.classList.remove('active', 'completed');
+    if (stepNum < activeStep) el.classList.add('completed');
+    if (stepNum === activeStep) el.classList.add('active');
+  });
+
+  connectors.forEach((el, idx) => {
+    el.classList.toggle('filled', idx < activeStep - 1);
+  });
+}
